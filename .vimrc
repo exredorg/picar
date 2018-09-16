@@ -4,6 +4,7 @@ set softtabstop=2
 set expandtab
 set nosmarttab
 
+set number
 set textwidth=80
 
 syntax on

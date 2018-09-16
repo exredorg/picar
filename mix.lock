@@ -1,3 +1,4 @@
 %{
-  "elixir_ale": {:hex, :elixir_ale, "0.4.1", "689372852d92736642e2abe8ba36a3ed63a3a4983bab5a0442d595848f4fcb2c", [:make, :mix], [], "hexpm"},
+  "elixir_ale": {:hex, :elixir_ale, "1.1.0", "06e77697fa0bd7aff5f9040d8be8ba7947e5833de2a12d1a25f54332556b4e90", [:make, :mix], [{:elixir_make, "~> 0.4", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm"},
+  "elixir_make": {:hex, :elixir_make, "0.4.2", "332c649d08c18bc1ecc73b1befc68c647136de4f340b548844efc796405743bf", [:mix], [], "hexpm"},
 }

@@ -3,9 +3,16 @@ defmodule Picar.RearWheels do
   require Logger
   use GenServer
   alias Picar.PWM
+  alias ElixirALE.GPIO
+
 
   @pwma  4
   @pwmb  5
+  @motor_a_dir_gpio 17
+  @motor_b_dir_gpio 27
+  @forward 0
+  @backward 1
+
 
 
   # API
@@ -20,9 +27,22 @@ defmodule Picar.RearWheels do
   end
 
   def faster do
-    GenServer.call(__MODULE__, :faster)
+    GenServer.call(__MODULE__, {:change_speed, +100})
   end
 
+  def slower do
+    GenServer.call(__MODULE__, {:change_speed, -100})
+  end
+
+  def forward do 
+    GenServer.call(__MODULE__, {:change_direction, @forward})
+  end
+
+  def backward do 
+    GenServer.call(__MODULE__, {:change_direction, @backward})
+  end
+
+  
 
   # Callbacks
   #####################
@@ -35,7 +55,9 @@ defmodule Picar.RearWheels do
       i2c_device: "i2c-1",
       i2c_address: 0x40,
       i2c_pid: None,
-      freq: 1600,
+      gpio_pid_motor_a: None,
+      gpio_pid_motor_b: None,
+      freq: 60,
       speed: 0
     }
 
@@ -47,8 +69,12 @@ defmodule Picar.RearWheels do
     PWM.set_pwm(pid, @pwma, 0, 0)
     PWM.set_pwm(pid, @pwmb, 0, 0)
 
-    {:ok, %{state | i2c_pid: pid}}
-  end
+    {:ok, gpio_pid_motor_a} = GPIO.start_link @motor_a_dir_gpio, :output
+    {:ok, gpio_pid_motor_b} = GPIO.start_link @motor_b_dir_gpio, :output
+
+    {:ok, %{state | i2c_pid: pid, gpio_pid_motor_a: gpio_pid_motor_a, gpio_pid_motor_b: gpio_pid_motor_b}}
+  end 
+
 
   @impl true
   def handle_call(:stop, _from, state) do
@@ -60,8 +86,9 @@ defmodule Picar.RearWheels do
     {:reply, reply, new_state}
   end
 
-  def handle_call(:faster, _from, state) do
-    new_speed = state.speed + 100
+  def handle_call({:change_speed, speed_delta}, _from, %{speed: speed} = state) do
+
+    new_speed = speed + speed_delta
 
     PWM.set_pwm(state.i2c_pid, @pwma, 0, new_speed)
     PWM.set_pwm(state.i2c_pid, @pwmb, 0, new_speed)
@@ -72,5 +99,6 @@ defmodule Picar.RearWheels do
     new_state =  %{state | speed: new_speed}
     {:reply, reply, new_state}
   end
+
 end
 

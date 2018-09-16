@@ -3,12 +3,7 @@ defmodule Picar do
   Documentation for Picar.
   """
 
-  def stop do
-    Picar.RearWheels.stop
-  end
-
-  def faster do
-    Picar.RearWheels.faster
-  end
-
+  def stop,   do: Picar.RearWheels.stop
+  def faster, do: Picar.RearWheels.faster
+  def slower, do: Picar.RearWheels.slower
 end

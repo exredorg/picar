@@ -5,10 +5,23 @@ defmodule Picar.Application do
 
   use Application
 
+
+  
+  @i2c_device "i2c-1"
+  @i2c_address 0x40
+
+
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      {Picar.RearWheels, []}
+      %{
+        id: I2C,
+        start: {ElixirALE.I2C, :start_link, [@i2c_device, @i2c_address, [name: :i2c]]}
+      },
+      {Picar.PWM, []},
+      {Picar.RearWheels, []},
+      {Picar.FrontWheels, []}
+
       # Starts a worker by calling: Picar.Worker.start_link(arg)
       # {Picar.Worker, arg},
     ]
