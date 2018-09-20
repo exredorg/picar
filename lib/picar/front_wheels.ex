@@ -21,6 +21,10 @@ defmodule Picar.FrontWheels do
   def test do
     GenServer.call(__MODULE__, :test)
   end
+
+  def test2 do
+    GenServer.call(__MODULE__, :test2)
+  end
   
 
   # Callbacks
@@ -31,27 +35,21 @@ defmodule Picar.FrontWheels do
     Logger.debug "Starting..."
 
     state = %{
-      i2c_device: "i2c-1",
-      i2c_address: 0x40,
-      i2c_pid: None,
       freq: 60,
       speed: 0
     }
 
-    pid = PWM.start
-    PWM.init(pid)
-    PWM.prescale(pid, state.freq)
-    PWM.set_pwm_ab(pid)
+    straight = angle_to_analog(90)
+    Logger.debug "Turning straight (#{straight})"
+    PWM.set(@pwm_ch, 0, 0)
+    :timer.sleep(1000)
 
-    # PWM.set_pwm(pid, @pwm_ch, 0, 0)
-
-    {:ok, %{state | i2c_pid: pid}}
+    {:ok, state}
   end 
 
 
   @impl true
   def handle_call({:set_angle, angle}, _from, %{angle: angle} = state) do
-
     new_speed = 10
 
     #PWM.set_pwm(state.i2c_pid, @pwma, 0, new_speed)
@@ -70,22 +68,34 @@ defmodule Picar.FrontWheels do
     right = angle_to_analog(110)
     
     Logger.debug "Turning straight (#{straight})"
-    PWM.set_pwm(state.i2c_pid, @pwm_ch, 0, straight)
-    :timer.sleep(1000)
+    PWM.set(@pwm_ch, 0, straight)
+    :timer.sleep(500)
 
     Logger.debug "Turning left (#{left})"
-    PWM.set_pwm(state.i2c_pid, @pwm_ch, 0, left)
-    :timer.sleep(1000)
+    PWM.set(@pwm_ch, 0, left)
+    :timer.sleep(500)
 
     Logger.debug "Turning right (#{right})"
-    PWM.set_pwm(state.i2c_pid, @pwm_ch, 0, right)
-    :timer.sleep(1000)
+    PWM.set(@pwm_ch, 0, right)
+    :timer.sleep(500)
 
     Logger.debug "Turning straight (#{straight})"
-    PWM.set_pwm(state.i2c_pid, @pwm_ch, 0, straight)
+    PWM.set(@pwm_ch, 0, straight)
 
-    {:noreply, state}
+    {:reply, :ok, state}
   end
+
+  def handle_call(:test2, _from, state) do
+    straight = angle_to_analog(90)
+    
+    Logger.debug "Turning straight (#{straight})"
+    PWM.set(@pwm_ch, 0, straight)
+    :timer.sleep(100)
+    Logger.debug "Done"
+
+    {:reply, :ok, state}
+  end
+
 
 
 
