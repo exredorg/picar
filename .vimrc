@@ -22,6 +22,10 @@ Plugin 'VundleVim/Vundle.vim'
 
 Plugin 'elixir-editors/vim-elixir'
 Plugin 'mattreduce/vim-mix'
+Plugin 'altercation/vim-colors-solarized.git'
+syntax enable
+set background=dark
+colorscheme solarized
 
 " The following are examples of different formats supported.
 " Keep Plugin commands between vundle#begin/end.

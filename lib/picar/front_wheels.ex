@@ -9,6 +9,7 @@ defmodule Picar.FrontWheels do
   @max_pulse_width 2400
   @default_pulse_width 1500
   @frequency 60
+  @angle_offset -2
 
 
   # API
@@ -18,13 +19,9 @@ defmodule Picar.FrontWheels do
     GenServer.start_link(__MODULE__, default, name: __MODULE__)
   end
 
-  def test do
-    GenServer.call(__MODULE__, :test)
-  end
-
-  def test2 do
-    GenServer.call(__MODULE__, :test2)
-  end
+  def test,  do: GenServer.call(__MODULE__, :test)
+  def test2, do: GenServer.call(__MODULE__, :test2)
+  def test3, do: GenServer.call(__MODULE__, :test3)
   
 
   # Callbacks
@@ -36,17 +33,22 @@ defmodule Picar.FrontWheels do
 
     state = %{
       freq: 60,
-      speed: 0
+      current_angle: 90,
+      target_angle: 90
     }
 
     straight = angle_to_analog(90)
     Logger.debug "Turning straight (#{straight})"
-    PWM.set(@pwm_ch, 0, 0)
+    PWM.set(@pwm_ch, 0, angle_to_analog(state.current_angle))
     :timer.sleep(1000)
 
-    {:ok, state}
+    {:ok, state, 200}
   end 
 
+  $impl true
+  def handle_info(:timeout, state) do
+    # turn front wheel one step closer to target
+    {
 
   @impl true
   def handle_call({:set_angle, angle}, _from, %{angle: angle} = state) do
@@ -96,11 +98,47 @@ defmodule Picar.FrontWheels do
     {:reply, :ok, state}
   end
 
+  def handle_call(:test3, _from, state) do
+    straight = 90
+    left = 70
+    right = 110
+    
+    Logger.debug "Turning straight (#{straight})"
+    PWM.set(@pwm_ch, 0, angle_to_analog(straight))
+    :timer.sleep(500)
+
+    Logger.debug "Turning left (#{left})"
+    for angle <- straight..left, &(rem(&1,5) == 0) do
+      PWM.set(@pwm_ch, 0, angle_to_analog(angle))
+      :timer.sleep(100)
+    end
+    for angle <- left..straight, &(rem(&1,5) == 0) do
+      PWM.set(@pwm_ch, 0, angle_to_analog(angle))
+      :timer.sleep(100)
+    end
+
+    Logger.debug "Turning right (#{right})"
+    for angle <- straight..right, &(rem(&1,5) == 0) do
+      PWM.set(@pwm_ch, 0, angle_to_analog(angle))
+      :timer.sleep(100)
+    end
+    for angle <- right..straight, &(rem(&1,5) == 0) do
+      PWM.set(@pwm_ch, 0, angle_to_analog(angle))
+      :timer.sleep(100)
+    end
+
+    Logger.debug "Turning straight (#{straight})"
+    PWM.set(@pwm_ch, 0, angle_to_analog(straight))
+
+    {:reply, :ok, state}
+  end
+
+
 
 
 
   def angle_to_analog(angle) do
-    pulse_width = angle / 180 * (@max_pulse_width - @min_pulse_width) + @min_pulse_width
+    pulse_width = (angle + @angle_offset) / 180 * (@max_pulse_width - @min_pulse_width) + @min_pulse_width
     analog_value = round(pulse_width / 1000000 * @frequency * 4096)
   end
 
