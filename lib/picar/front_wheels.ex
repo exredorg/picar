@@ -23,6 +23,9 @@ defmodule Picar.FrontWheels do
   def test2, do: GenServer.call(__MODULE__, :test2)
   def test3, do: GenServer.call(__MODULE__, :test3)
   
+  def left(angle), do: GenServer.call(__MODULE__, {:set_target, 90-angle)
+  def right(angle), do: GenServer.call(__MODULE__, {:set_target, 90+angle)
+  def straight, do: GenServer.call(__MODULE__, {:set_target, 90)
 
   # Callbacks
   #####################
@@ -45,23 +48,28 @@ defmodule Picar.FrontWheels do
     {:ok, state, 200}
   end 
 
-  $impl true
-  def handle_info(:timeout, state) do
-    # turn front wheel one step closer to target
-    {
 
   @impl true
-  def handle_call({:set_angle, angle}, _from, %{angle: angle} = state) do
-    new_speed = 10
+  def handle_info(:timeout, %{current_angle: ca, target_angle: ta} = state) do
+    # turn front wheel one step closer to target
+    if ta == ca do
+      {:noreply, state, 200}
+    else
+      new_ca = ca + abs(ta-ca)*5
+      {:noreply, %{state | current_angle: new_ca}}
+    end
+  end
 
-    #PWM.set_pwm(state.i2c_pid, @pwma, 0, new_speed)
-    #PWM.set_pwm(state.i2c_pid, @pwmb, 0, new_speed)
 
-    Logger.debug "Speed set to #{new_speed}"
-
-    reply = {:ok, %{speed: new_speed}}
-    new_state =  %{state | speed: new_speed}
-    {:reply, reply, new_state}
+  @impl true
+  def handle_call({:set_target, angle}, _from, state) do
+    if angle>=45 and angle <=135 do
+      Logger.debug "Target angle set to #{angle}"
+      {:ok, %{state| target_angle: angle}, 200}
+    else
+      Logger.debug "Target angle #{angle} refused"
+      {:refused, state, 200}
+    end
   end
 
   def handle_call(:test, _from, state) do
@@ -132,9 +140,6 @@ defmodule Picar.FrontWheels do
 
     {:reply, :ok, state}
   end
-
-
-
 
 
   def angle_to_analog(angle) do
